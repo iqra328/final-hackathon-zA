@@ -38,7 +38,7 @@ process.removeAllListeners('warning');
 process.on('warning', () => {});
 
 // ============================================
-// ✅ CORS Configuration - COMPLETE
+// ✅ CORS Configuration - UPDATED WITH NETLIFY URL
 // ============================================
 const corsOptions = {
   origin: [
@@ -49,7 +49,8 @@ const corsOptions = {
     'https://ticketing-app-s0fx.onrender.com',
     'https://ticketing-frontend.onrender.com',
     'https://storied-mousse-1279ad.netlify.app',
-    'https://ticketing-app-s0fx.netlify.app'
+    'https://ticketing-app-s0fx.netlify.app',
+    'https://beamish-lamington-012119.netlify.app'  // ✅ NETLIFY URL ADDED
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -59,7 +60,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // ============================================
-// ✅ Socket.IO Setup - COMPLETE
+// ✅ Socket.IO Setup - UPDATED WITH NETLIFY URL
 // ============================================
 const io = new Server(server, {
   cors: {
@@ -71,7 +72,8 @@ const io = new Server(server, {
       'https://ticketing-app-s0fx.onrender.com',
       'https://ticketing-frontend.onrender.com',
       'https://storied-mousse-1279ad.netlify.app',
-      'https://ticketing-app-s0fx.netlify.app'
+      'https://ticketing-app-s0fx.netlify.app',
+      'https://beamish-lamington-012119.netlify.app'  // ✅ NETLIFY URL ADDED
     ],
     credentials: true,
     methods: ['GET', 'POST'],

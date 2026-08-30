@@ -4,10 +4,9 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { API_URL } from '../../config/api';
 import '../../styles/global.css';
 import '../../styles/WorkerDashboard.css';
-
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/$/, '');
 
 export default function WorkerDashboard() {
   const { token, user, logout } = useAuth();

@@ -3,10 +3,9 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as THREE from 'three';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { API_URL } from '../config/api';
 import '../styles/global.css';
 import '../styles/Login.css';
-
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/$/, '');
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });

@@ -76,7 +76,11 @@ export default function WorkerDashboard() {
       const response = await axios.get(`${API_URL}/tickets`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const workerTasks = response.data.filter(t => t.workerId?._id === user?.id);
+      const workerTasks = response.data.filter((task) => {
+        const assignedWorkerId = task.workerId?._id || task.workerId;
+        const currentWorkerId = user?.id || user?._id;
+        return String(assignedWorkerId) === String(currentWorkerId);
+      });
       setTasks(workerTasks);
     } catch (error) {
       console.error('Error fetching tasks:', error);

@@ -309,11 +309,11 @@ const Register = () => {
           {/* Social */}
           <div className="register-social">
             <button className="register-social-btn" type="button">
-              <span className="social-icon" aria-hidden="true">G</span>
+              <img src="https://www.google.com/favicon.ico" alt="Google" />
               Google
             </button>
             <button className="register-social-btn" type="button">
-              <span className="social-icon" aria-hidden="true">GH</span>
+              <img src="https://github.com/favicon.ico" alt="GitHub" />
               GitHub
             </button>
           </div>

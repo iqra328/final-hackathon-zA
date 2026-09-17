@@ -10,7 +10,10 @@ export const SocketProvider = ({ children }) => {
   const { token } = useAuth();
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setSocket(null);
+      return;
+    }
 
     const newSocket = io(SOCKET_URL, {
       auth: { token },

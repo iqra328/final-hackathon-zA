@@ -3,9 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import * as THREE from 'three';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { API_URL } from '../config/api';
 import '../styles/global.css';
 import '../styles/Login.css';
+
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:10000/api').replace(/\/$/, '');
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -132,7 +133,6 @@ const Login = () => {
     window.addEventListener('resize', resize);
 
     const timer = new THREE.Timer();
-    let animationFrame;
 
     const animate = () => {
       timer.update();
@@ -149,7 +149,7 @@ const Login = () => {
       cube.rotation.x = elapsed * 0.8 * speed;
       cube.rotation.y = elapsed * 1.1 * speed;
       renderer.render(scene, camera);
-      animationFrame = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
     };
 
     animate();
@@ -158,7 +158,6 @@ const Login = () => {
       container.removeEventListener('pointermove', handlePointerMove);
       container.removeEventListener('pointerleave', resetPointer);
       window.removeEventListener('resize', resize);
-      cancelAnimationFrame(animationFrame);
       renderer.dispose();
       cube.geometry.dispose();
       cube.material.dispose();
@@ -333,7 +332,11 @@ const Login = () => {
                 <LoadingSpinner size="sm" />
               ) : (
                 <>
-                  <span className="social-icon" aria-hidden="true">G</span>
+                  <img 
+                    src="https://www.google.com/favicon.ico" 
+                    alt="Google" 
+                    className="social-icon"
+                  />
                   Google
                 </>
               )}
@@ -346,7 +349,11 @@ const Login = () => {
                 alert('GitHub authentication coming soon!');
               }}
             >
-              <span className="social-icon" aria-hidden="true">GH</span>
+              <img 
+                src="https://github.com/favicon.ico" 
+                alt="GitHub" 
+                className="social-icon"
+              />
               GitHub
             </button>
           </div>

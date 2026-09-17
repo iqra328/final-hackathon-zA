@@ -286,12 +286,19 @@ router.get('/:id/worker-suggestions', auth, async (req, res) => {
 
     if (suggestions.length === 0) {
       const category = ticket.category ? ticket.category.toLowerCase() : 'general';
-      const workers = await User.find({
+      let workers = await User.find({
         role: 'worker',
         isAvailable: true,
         skills: { $in: [category] }
       }).select('name email skills rating completedTasks').limit(10);
-      
+
+      if (workers.length === 0) {
+        workers = await User.find({
+          role: 'worker',
+          isAvailable: true,
+        }).select('name email skills rating completedTasks').limit(10);
+      }
+
       suggestions = workers.map(worker => ({
         workerId: worker._id,
         name: worker.name,

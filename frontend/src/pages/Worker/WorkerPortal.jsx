@@ -29,7 +29,8 @@ export default function WorkerDashboard() {
   const [profileData, setProfileData] = useState({ 
     name: user?.name || '', 
     currentPassword: '', 
-    newPassword: '' 
+    newPassword: '',
+    skills: (user?.skills || []).join(', '),
   });
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('workerTheme') || 'dark');
@@ -252,14 +253,19 @@ export default function WorkerDashboard() {
   // Profile
   const handleUpdateProfile = async () => {
     try {
-      if (profileData.name && profileData.name !== user?.name) {
+      const updates = {};
+      if (profileData.name && profileData.name !== user?.name) updates.name = profileData.name;
+      if (profileData.skills && profileData.skills !== (user?.skills || []).join(', ')) {
+        updates.skills = profileData.skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      if (Object.keys(updates).length > 0) {
         await axios.put(
           `${API_URL}/users/profile`,
-          { name: profileData.name },
+          updates,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const savedUser = JSON.parse(localStorage.getItem('user'));
-        const updatedUser = { ...savedUser, name: profileData.name };
+        const updatedUser = { ...savedUser, ...updates };
         localStorage.setItem('user', JSON.stringify(updatedUser));
         showNotification('✅ Profile updated!', 'success');
         setTimeout(() => window.location.reload(), 1000);
@@ -866,6 +872,19 @@ Generated on: ${new Date().toLocaleString()}
               <div className="profile-field">
                 <label>Email</label>
                 <input type="email" value={user?.email} className="profile-input" disabled />
+              </div>
+              <div className="profile-field">
+                <label>Skills <span style={{ opacity: 0.6, fontSize: '0.75rem' }}>(comma separated)</span></label>
+                <input
+                  type="text"
+                  value={profileData.skills}
+                  onChange={(e) => setProfileData({ ...profileData, skills: e.target.value })}
+                  placeholder="e.g. plumbing, electrical, cleaning"
+                  className="profile-input"
+                />
+                <small style={{ opacity: 0.6, display: 'block', marginTop: 4 }}>
+                  Skills se agent ko assign krne me mil sakte hain (plumbing, electrical, carpentry, cleaning, painting, general)
+                </small>
               </div>
               <div className="profile-field">
                 <label>Role</label>

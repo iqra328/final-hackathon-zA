@@ -16,13 +16,19 @@ router.get('/profile', auth, async (req, res) => {
 
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, email, preferences, isAvailable } = req.body;
+    const { name, email, preferences, isAvailable, skills } = req.body;
     const updates = {};
 
     if (name !== undefined) updates.name = String(name).trim();
     if (email !== undefined) updates.email = String(email).trim().toLowerCase();
     if (preferences !== undefined) updates.preferences = preferences;
     if (isAvailable !== undefined) updates.isAvailable = Boolean(isAvailable);
+    if (skills !== undefined) {
+      const list = Array.isArray(skills)
+        ? skills
+        : String(skills).split(',').map(s => s.trim().toLowerCase());
+      updates.skills = list.filter(Boolean);
+    }
 
     const user = await User.findByIdAndUpdate(req.user.userId, updates, {
       new: true,

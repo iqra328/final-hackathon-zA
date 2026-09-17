@@ -20,6 +20,9 @@ export default function WorkerDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('tasks');
   const [notification, setNotification] = useState(null);
+  const [notifList, setNotifList] = useState([]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [newTaskIds, setNewTaskIds] = useState([]);
   const [isAvailable, setIsAvailable] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
@@ -41,10 +44,22 @@ export default function WorkerDashboard() {
     fetchStats();
 
     if (socket) {
-      socket.on('new-task', () => {
+      socket.on('new-task', (data) => {
         fetchTasks();
         fetchStats();
+        const notif = {
+          id: data?.ticketId || `n${Date.now()}`,
+          ticketNumber: data?.ticketNumber || '',
+          subject: data?.subject || 'New task assigned',
+          customer: data?.customerName || 'Customer',
+          time: Date.now(),
+          read: false,
+        };
+        setNotifList((prev) => [notif, ...prev].slice(0, 30));
+        setNewTaskIds((prev) => [notif.id, ...prev.filter((t) => t !== notif.id)].slice(0, 10));
         showNotification('📋 New task assigned!', 'info');
+        playBeep();
+        sendBrowserNotification(notif);
       });
       socket.on('ticket-cancelled', () => {
         fetchTasks();
@@ -69,6 +84,85 @@ export default function WorkerDashboard() {
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 4000);
+  };
+
+  const playBeep = () => {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      [0, 0.18].forEach((start, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = i === 0 ? 740 : 988;
+        const t = ctx.currentTime + start;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      });
+      setTimeout(() => ctx.close(), 800);
+    } catch (e) {
+      console.warn('Beep not available');
+    }
+  };
+
+  const sendBrowserNotification = (notif) => {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      new Notification(`New task: ${notif.subject}`, {
+        body: `${notif.ticketNumber} • ${notif.customer}`,
+        tag: notif.id,
+      });
+    } catch (e) {
+      console.warn('Browser notification not available');
+    }
+  };
+
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('workerNotifs') || 'null');
+      if (saved?.list) setNotifList(saved.list);
+    } catch (e) {
+      console.warn('Could not load saved notifications');
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('workerNotifs', JSON.stringify({ list: notifList }));
+  }, [notifList]);
+
+  useEffect(() => {
+    if (newTaskIds.length === 0) return;
+    const t = setTimeout(() => setNewTaskIds([]), 15000);
+    return () => clearTimeout(t);
+  }, [newTaskIds]);
+
+  const unreadCount = notifList.filter((n) => !n.read).length;
+
+  const toggleNotifPanel = () => {
+    setShowNotifPanel((v) => !v);
+    setNotifList((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const clearNotifs = () => {
+    setNotifList([]);
+    setShowNotifPanel(false);
+  };
+
+  const openTask = (id) => {
+    setShowNotifPanel(false);
+    if (id) navigate(`/ticket/${id}`);
   };
 
   const fetchTasks = async () => {
@@ -447,6 +541,38 @@ Generated on: ${new Date().toLocaleString()}
           </div>
         </div>
         <div className="worker-header-right">
+          <div className={`worker-notif-wrap ${showNotifPanel ? 'open' : ''}`}>
+            <button onClick={toggleNotifPanel} className="worker-notif-btn" title="Notifications">
+              🔔
+              {unreadCount > 0 && <span className="worker-notif-badge">{unreadCount}</span>}
+            </button>
+            {showNotifPanel && (
+              <div className="worker-notif-panel">
+                <div className="worker-notif-panel-header">
+                  <span>🔔 Notifications</span>
+                  <button onClick={clearNotifs} className="worker-notif-clear">Clear all</button>
+                </div>
+                <div className="worker-notif-list">
+                  {notifList.length === 0 ? (
+                    <div className="worker-notif-empty">No notifications yet</div>
+                  ) : (
+                    notifList.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`worker-notif-item ${n.read ? 'read' : 'unread'}`}
+                        onClick={() => openTask(n.id)}
+                      >
+                        <div className="worker-notif-subject">📋 {n.subject}</div>
+                        <div className="worker-notif-meta">
+                          {n.ticketNumber} • {n.customer} • {new Date(n.time).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <button onClick={toggleTheme} className="worker-theme-toggle" title="Toggle theme">
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
@@ -592,7 +718,7 @@ Generated on: ${new Date().toLocaleString()}
           ) : (
             <div className="worker-tasks-grid">
               {displayTasks.map((task) => (
-                <div key={task._id} className="worker-task-card">
+                <div key={task._id} className={`worker-task-card ${newTaskIds.includes(task._id) ? 'task-new-highlight' : ''}`}>
                   <div className="task-card-header">
                     <div className="task-badges">
                       <span className={`status-badge ${getStatusClass(task.status)}`}>
